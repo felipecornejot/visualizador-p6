@@ -23,122 +23,107 @@ colors_for_charts = [color_primario_1_rgb, color_primario_2_rgb, color_sustrend_
 # --- Configuración de la página de Streamlit ---
 st.set_page_config(layout="wide")
 
-st.title('✨ Visualizador de Impactos - Proyecto P5')
-st.subheader('Insect Based Food: Producción de proteína alternativa a partir de insectos')
+st.title('✨ Visualizador de Impactos - Proyecto P6')
+st.subheader('Valorización de descartes cárnicos')
 st.markdown("""
-    Ajusta los parámetros para explorar las proyecciones de impacto ambiental y económico del proyecto P5,
-    que busca valorizar residuos orgánicos para producir proteína alternativa a partir de insectos.
+    Ajusta los parámetros para explorar cómo las proyecciones de impacto ambiental y económico del proyecto
+    varían con diferentes escenarios de volumen de descartes procesados, tasa de valorización, y precio de los péptidos.
 """)
 
-# --- 1. Datos del Proyecto (Línea Base) ---
-# Datos línea base (según ficha, los valores del script original para la "Línea Base")
-base_gei_evitados_total = 10  # tCO₂e/año (ejemplo del script original)
-base_residuos_valorizados = 15  # ton/año (ejemplo del script original)
-base_ingresos_estimados = 2000 # USD/año (ejemplo del script original)
-
-# --- 2. Widgets Interactivos para Parámetros (Streamlit) ---
+# --- Widgets Interactivos para Parámetros (Streamlit) ---
 st.sidebar.header('Parámetros de Simulación')
 
-residuos_procesados = st.sidebar.slider(
-    'Residuos Procesados (ton/año):',
-    min_value=5,
-    max_value=50,
-    value=15,
+descartes_procesados = st.sidebar.slider(
+    'Descartes cárnicos procesados (ton/año):',
+    min_value=10,
+    max_value=100,
+    value=50,
     step=5,
-    help="Cantidad de residuos orgánicos procesados anualmente para la producción de proteína de insectos."
+    help="Volumen anual de descartes cárnicos procesados."
 )
 
-tasa_aprovechamiento = st.sidebar.slider(
-    'Tasa de Aprovechamiento (%):',
-    min_value=0.5,
-    max_value=0.9,
-    value=0.8,
-    step=0.05,
-    format='%.1f%%',
-    help="Porcentaje de los residuos procesados que se transforman efectivamente en biomasa proteica valorizada."
-)
-
-factor_gei_relleno = st.sidebar.slider(
-    'Factor GEI Relleno Sanitario (tCO₂e/ton):',
-    min_value=0.4,
-    max_value=0.6,
-    value=0.52,
+tasa_valorizacion = st.sidebar.slider(
+    'Tasa de valorización (%):',
+    min_value=0.70, # Corregido a float para el slider
+    max_value=0.90, # Corregido a float para el slider
+    value=0.85,
     step=0.01,
-    help="Factor de emisión de GEI asociado a la disposición de residuos orgánicos en rellenos sanitarios."
+    format='%.1f%%', # Formato para mostrar como porcentaje
+    help="Porcentaje de descartes que se transforman en péptidos funcionales."
 )
 
-factor_gei_sustitucion = st.sidebar.slider(
-    'Factor GEI Sustitución Proteína (tCO₂e/ton):',
-    min_value=1.5,
-    max_value=2.5,
-    value=2.0,
+factor_gei_transporte = st.sidebar.slider(
+    'Factor GEI transporte evitado (tCO₂e/5 ton):',
+    min_value=1.0,
+    max_value=2.0,
+    value=1.2,
     step=0.1,
-    help="Factor de GEI evitado por la sustitución de proteína convencional (ej. carne, soya importada) por proteína de insectos."
+    help="Factor de emisiones de GEI evitadas por transporte por cada 5 toneladas de péptidos."
 )
 
-precio_proteina = st.sidebar.slider(
-    'Precio Proteína Equivalente (USD/ton):',
-    min_value=1000,
-    max_value=3000,
-    value=2000,
-    step=100,
-    help="Precio estimado de la tonelada de proteína de insectos en el mercado, en relación con proteínas que sustituye."
+precio_peptidos = st.sidebar.slider(
+    'Precio de mercado péptidos (USD/ton):',
+    min_value=5000,
+    max_value=10000,
+    value=8000,
+    step=500,
+    help="Precio de mercado estimado para los péptidos funcionales."
 )
 
-# --- 3. Cálculos de Indicadores ---
-residuos_valorizados = residuos_procesados * tasa_aprovechamiento
-gei_ev_relleno = residuos_procesados * factor_gei_relleno
-gei_ev_sustitucion = residuos_valorizados * factor_gei_sustitucion
-ingresos_estimados = residuos_valorizados * precio_proteina
-empleos_generados = 2 # Fijo según el script original
-interacciones_cadena = 3 # Fijo según el script original
+# --- Cálculos de Indicadores ---
+peptidos_producidos = descartes_procesados * tasa_valorizacion
+gei_ev_transporte = (peptidos_producidos / 5) * factor_gei_transporte
+ingresos_generados = peptidos_producidos * precio_peptidos
+ahorro_aditivos = peptidos_producidos * 0.2 # suponemos 20% sustitución
+alianzas_comerciales = 2 # Valor fijo según ficha
 
 st.header('Resultados Proyectados Anuales:')
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric(label="♻️ **Residuos Orgánicos Valorizados**", value=f"{residuos_valorizados:.2f} ton")
-    st.caption("Cantidad de residuos orgánicos transformados en biomasa útil.")
+    st.metric(label="🧪 **Péptidos funcionales obtenidos**", value=f"{peptidos_producidos:.2f} ton/año")
+    st.caption("Cantidad de péptidos naturales obtenidos a partir de descartes cárnicos.")
 with col2:
-    st.metric(label="🌎 **GEI Evitados en Relleno Sanitario**", value=f"{gei_ev_relleno:.2f} tCO₂e")
-    st.caption("Reducción de emisiones por desvío de residuos de rellenos sanitarios.")
+    st.metric(label="🌎 **GEI evitados por transporte**", value=f"{gei_ev_transporte:.2f} tCO₂e/año")
+    st.caption("Reducción de emisiones de gases de efecto invernadero por el transporte.")
 with col3:
-    st.metric(label="🥩 **GEI Evitados por Sustitución Proteína**", value=f"{gei_ev_sustitucion:.2f} tCO₂e")
-    st.caption("Reducción de emisiones por reemplazar proteínas convencionales.")
+    st.metric(label="💰 **Ingresos generados**", value=f"USD {ingresos_generados:,.2f}")
+    st.caption("Ingresos económicos por la venta de péptidos funcionales.")
 
-col4, col5, col6 = st.columns(3)
+col4, col5 = st.columns(2)
 
 with col4:
-    st.metric(label="💰 **Ingresos Estimados**", value=f"USD {ingresos_estimados:,.2f}")
-    st.caption("Valor económico generado por la venta de la proteína de insectos.")
+    st.metric(label="🌱 **Aditivos sintéticos reemplazados**", value=f"{ahorro_aditivos:.2f} ton/año")
+    st.caption("Cantidad de aditivos sintéticos sustituidos por los péptidos naturales.")
 with col5:
-    st.metric(label="🧑‍🤝‍🧑 **Empleos Generados**", value=f"{empleos_generados}")
-    st.caption("Número de empleos directos generados por la operación.")
-with col6:
-    st.metric(label="🔗 **Interacciones Cadena Suministro**", value=f"{interacciones_cadena}")
-    st.caption("Colaboraciones con actores de la cadena de suministro circular.")
+    st.metric(label="🤝 **Alianzas comerciales**", value=f"{alianzas_comerciales}")
+    st.caption("Número de acuerdos de simbiosis industrial.")
 
 st.markdown("---")
 
 st.header('📊 Análisis Gráfico de Impactos')
 
 # --- Visualización (Gráficos 2D con Matplotlib) ---
-labels = ['Línea Base', 'Proyección']
-bar_width = 0.6
-x = np.arange(len(labels))
+# Datos línea base (según ficha P6)
+base_peptidos = 8.5
+base_gei = 1.2
+base_ingresos = 1600
 
 # Creamos una figura con 3 subplots (2D)
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20, 7), facecolor=color_primario_3_rgb)
 fig.patch.set_facecolor(color_primario_3_rgb)
 
-# --- Gráfico 1: GEI Evitados Total (tCO₂e/año) ---
-# Suma de GEI evitados del relleno sanitario y por sustitución de proteína
-gei_evitados_total_proyeccion = gei_ev_relleno + gei_ev_sustitucion
-gei_values = [base_gei_evitados_total, gei_evitados_total_proyeccion]
+# Definición de etiquetas y valores para los gráficos de barras 2D
+labels = ['Línea Base', 'Proyección']
+bar_width = 0.6
+x = np.arange(len(labels))
+
+# --- Gráfico 1: GEI Evitados (tCO₂e/año) ---
+gei_values = [base_gei, gei_ev_transporte]
 bars1 = ax1.bar(x, gei_values, width=bar_width, color=[colors_for_charts[0], colors_for_charts[1]])
 ax1.set_ylabel('tCO₂e/año', fontsize=12, color=colors_for_charts[3])
-ax1.set_title('GEI Evitados Total', fontsize=14, color=colors_for_charts[3], pad=20)
+ax1.set_title('GEI Evitados por Transporte', fontsize=14, color=colors_for_charts[3], pad=20)
 ax1.set_xticks(x)
 ax1.set_xticklabels(labels, rotation=15, color=colors_for_charts[0])
 ax1.yaxis.set_tick_params(colors=colors_for_charts[0])
@@ -149,30 +134,30 @@ max_gei_val = max(gei_values)
 ax1.set_ylim(bottom=0, top=max(max_gei_val * 1.15, 1))
 for bar in bars1:
     yval = bar.get_height()
-    ax1.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, f"{yval:,.2f}", ha='center', va='bottom', color=colors_for_charts[0])
+    ax1.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, round(yval, 2), ha='center', va='bottom', color=colors_for_charts[0])
 
-# --- Gráfico 2: Residuos Valorizados (ton/año) ---
-residuos_values = [base_residuos_valorizados, residuos_valorizados]
-bars2 = ax2.bar(x, residuos_values, width=bar_width, color=[colors_for_charts[2], colors_for_charts[3]])
+# --- Gráfico 2: Péptidos Producidos (ton/año) ---
+peptidos_values = [base_peptidos, peptidos_producidos]
+bars2 = ax2.bar(x, peptidos_values, width=bar_width, color=[colors_for_charts[2], colors_for_charts[3]])
 ax2.set_ylabel('Toneladas/año', fontsize=12, color=colors_for_charts[0])
-ax2.set_title('Residuos Orgánicos Valorizados', fontsize=14, color=colors_for_charts[3], pad=20)
+ax2.set_title('Péptidos Producidos', fontsize=14, color=colors_for_charts[3], pad=20)
 ax2.set_xticks(x)
 ax2.set_xticklabels(labels, rotation=15, color=colors_for_charts[0])
 ax2.yaxis.set_tick_params(colors=colors_for_charts[0])
 ax2.spines['top'].set_visible(False)
 ax2.spines['right'].set_visible(False)
 ax2.tick_params(axis='x', length=0)
-max_residuos_val = max(residuos_values)
-ax2.set_ylim(bottom=0, top=max(max_residuos_val * 1.15, 1))
+max_peptidos_val = max(peptidos_values)
+ax2.set_ylim(bottom=0, top=max(max_peptidos_val * 1.15, 1))
 for bar in bars2:
     yval = bar.get_height()
-    ax2.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, f"{yval:,.2f}", ha='center', va='bottom', color=colors_for_charts[0])
+    ax2.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, round(yval, 2), ha='center', va='bottom', color=colors_for_charts[0])
 
-# --- Gráfico 3: Ingresos Estimados (USD/año) ---
-ingresos_values = [base_ingresos_estimados, ingresos_estimados]
+# --- Gráfico 3: Ingresos Generados (USD/año) ---
+ingresos_values = [base_ingresos, ingresos_generados]
 bars3 = ax3.bar(x, ingresos_values, width=bar_width, color=[colors_for_charts[1], colors_for_charts[0]])
 ax3.set_ylabel('USD/año', fontsize=12, color=colors_for_charts[3])
-ax3.set_title('Ingresos Estimados', fontsize=14, color=colors_for_charts[3], pad=20)
+ax3.set_title('Ingresos Generados', fontsize=14, color=colors_for_charts[3], pad=20)
 ax3.set_xticks(x)
 ax3.set_xticklabels(labels, rotation=15, color=colors_for_charts[0])
 ax3.yaxis.set_tick_params(colors=colors_for_charts[0])
@@ -183,7 +168,7 @@ max_ingresos_val = max(ingresos_values)
 ax3.set_ylim(bottom=0, top=max(max_ingresos_val * 1.15, 1000))
 for bar in bars3:
     yval = bar.get_height()
-    ax3.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, f"${yval:,.2f}", ha='center', va='bottom', color=colors_for_charts[0])
+    ax3.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, f"${yval:,.0f}", ha='center', va='bottom', color=colors_for_charts[0])
 
 plt.tight_layout(rect=[0, 0.05, 1, 0.95])
 st.pyplot(fig)
@@ -205,11 +190,11 @@ def download_button(fig, filename_prefix, key):
     )
 
 # Crear figuras individuales para cada gráfico para poder descargarlas
-# Figura 1: GEI Evitados Total
+# Figura 1: GEI Evitados
 fig_gei, ax_gei = plt.subplots(figsize=(8, 6), facecolor=color_primario_3_rgb)
 ax_gei.bar(x, gei_values, width=bar_width, color=[colors_for_charts[0], colors_for_charts[1]])
 ax_gei.set_ylabel('tCO₂e/año', fontsize=12, color=colors_for_charts[3])
-ax_gei.set_title('GEI Evitados Total', fontsize=14, color=colors_for_charts[3], pad=20)
+ax_gei.set_title('GEI Evitados por Transporte', fontsize=14, color=colors_for_charts[3], pad=20)
 ax_gei.set_xticks(x)
 ax_gei.set_xticklabels(labels, rotation=15, color=colors_for_charts[0])
 ax_gei.yaxis.set_tick_params(colors=colors_for_charts[0])
@@ -219,35 +204,35 @@ ax_gei.tick_params(axis='x', length=0)
 ax_gei.set_ylim(bottom=0, top=max(max_gei_val * 1.15, 1))
 for bar in ax_gei.patches:
     yval = bar.get_height()
-    ax_gei.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, f"{yval:,.2f}", ha='center', va='bottom', color=colors_for_charts[0])
+    ax_gei.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, round(yval, 2), ha='center', va='bottom', color=colors_for_charts[0])
 plt.tight_layout()
-download_button(fig_gei, "GEI_Evitados_Total", "download_gei")
+download_button(fig_gei, "GEI_Evitados", "download_gei")
 plt.close(fig_gei)
 
-# Figura 2: Residuos Valorizados
-fig_residuos, ax_residuos = plt.subplots(figsize=(8, 6), facecolor=color_primario_3_rgb)
-ax_residuos.bar(x, residuos_values, width=bar_width, color=[colors_for_charts[2], colors_for_charts[3]])
-ax_residuos.set_ylabel('Toneladas/año', fontsize=12, color=colors_for_charts[0])
-ax_residuos.set_title('Residuos Orgánicos Valorizados', fontsize=14, color=colors_for_charts[3], pad=20)
-ax_residuos.set_xticks(x)
-ax_residuos.set_xticklabels(labels, rotation=15, color=colors_for_charts[0])
-ax_residuos.yaxis.set_tick_params(colors=colors_for_charts[0])
-ax_residuos.spines['top'].set_visible(False)
-ax_residuos.spines['right'].set_visible(False)
-ax_residuos.tick_params(axis='x', length=0)
-ax_residuos.set_ylim(bottom=0, top=max(max_residuos_val * 1.15, 1))
-for bar in ax_residuos.patches:
+# Figura 2: Péptidos Producidos
+fig_peptidos, ax_peptidos = plt.subplots(figsize=(8, 6), facecolor=color_primario_3_rgb)
+ax_peptidos.bar(x, peptidos_values, width=bar_width, color=[colors_for_charts[2], colors_for_charts[3]])
+ax_peptidos.set_ylabel('Toneladas/año', fontsize=12, color=colors_for_charts[0])
+ax_peptidos.set_title('Péptidos Producidos', fontsize=14, color=colors_for_charts[3], pad=20)
+ax_peptidos.set_xticks(x)
+ax_peptidos.set_xticklabels(labels, rotation=15, color=colors_for_charts[0])
+ax_peptidos.yaxis.set_tick_params(colors=colors_for_charts[0])
+ax_peptidos.spines['top'].set_visible(False)
+ax_peptidos.spines['right'].set_visible(False)
+ax_peptidos.tick_params(axis='x', length=0)
+ax_peptidos.set_ylim(bottom=0, top=max(max_peptidos_val * 1.15, 1))
+for bar in ax_peptidos.patches:
     yval = bar.get_height()
-    ax_residuos.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, f"{yval:,.2f}", ha='center', va='bottom', color=colors_for_charts[0])
+    ax_peptidos.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, round(yval, 2), ha='center', va='bottom', color=colors_for_charts[0])
 plt.tight_layout()
-download_button(fig_residuos, "Residuos_Valorizados", "download_residuos")
-plt.close(fig_residuos)
+download_button(fig_peptidos, "Peptidos_Producidos", "download_peptidos")
+plt.close(fig_peptidos)
 
-# Figura 3: Ingresos Estimados
+# Figura 3: Ingresos Generados
 fig_ingresos, ax_ingresos = plt.subplots(figsize=(8, 6), facecolor=color_primario_3_rgb)
 ax_ingresos.bar(x, ingresos_values, width=bar_width, color=[colors_for_charts[1], colors_for_charts[0]])
 ax_ingresos.set_ylabel('USD/año', fontsize=12, color=colors_for_charts[3])
-ax_ingresos.set_title('Ingresos Estimados', fontsize=14, color=colors_for_charts[3], pad=20)
+ax_ingresos.set_title('Ingresos Generados', fontsize=14, color=colors_for_charts[3], pad=20)
 ax_ingresos.set_xticks(x)
 ax_ingresos.set_xticklabels(labels, rotation=15, color=colors_for_charts[0])
 ax_ingresos.yaxis.set_tick_params(colors=colors_for_charts[0])
@@ -257,19 +242,14 @@ ax_ingresos.tick_params(axis='x', length=0)
 ax_ingresos.set_ylim(bottom=0, top=max(max_ingresos_val * 1.15, 1000))
 for bar in ax_ingresos.patches:
     yval = bar.get_height()
-    ax_ingresos.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, f"${yval:,.2f}", ha='center', va='bottom', color=colors_for_charts[0])
+    ax_ingresos.text(bar.get_x() + bar.get_width()/2, yval + 0.05 * yval, f"${yval:,.0f}", ha='center', va='bottom', color=colors_for_charts[0])
 plt.tight_layout()
-download_button(fig_ingresos, "Ingresos_Estimados", "download_ingresos")
+download_button(fig_ingresos, "Ingresos_Generados", "download_ingresos")
 plt.close(fig_ingresos)
 
 st.markdown("---")
 st.markdown("### Información Adicional:")
-st.markdown("""
-- **Estado de Avance y Recomendaciones:** El proyecto P5 se encuentra en una etapa avanzada de validación de laboratorio, con resultados positivos en la calidad nutricional del producto final y la eficiencia de la tecnología para transformar residuos orgánicos en biomasa proteica. Se recomienda profundizar en la caracterización de los residuos valorizados, cuantificar su origen y tipo, y formalizar protocolos de recolección y manejo.
-- **Monitoreo de Impactos:** Se sugiere establecer un sistema de monitoreo de emisiones GEI evitadas (por reducción de disposición en relleno sanitario y sustitución de insumos de alto impacto), e integrar métricas de uso de agua y energía.
-- **Alianzas Estratégicas:** Se recomienda fomentar acuerdos con municipios, agroindustrias y comercios locales para el abastecimiento regular de residuos orgánicos y el desarrollo de una cadena de suministro circular.
-- **Evaluación Económica:** Incluir una evaluación económica ex ante con métricas como VAN y TIR para dimensionar el potencial de escalamiento comercial y los requerimientos de inversión inicial.
-""")
+st.markdown(f"- **Estado de Avance y Recomendaciones:** El proyecto ha logrado validar técnicamente la obtención de péptidos naturales a partir de descartes avícolas en condiciones controladas de laboratorio. Se encuentran en desarrollo acuerdos de colaboración con actores de la industria avícola para escalar el proceso a nivel piloto, y se está explorando el interés comercial de empresas elaboradoras de productos cárnicos.")
 
 st.markdown("---")
 # Texto de atribución centrado
@@ -304,5 +284,5 @@ with col_logos_center:
 st.markdown("<div style='text-align: center; font-size: small; color: gray;'>Viña del Mar, Valparaíso, Chile</div>", unsafe_allow_html=True)
 
 st.sidebar.markdown("---")
-st.sidebar.markdown(f"<div style='text-align: center; font-size: smaller; color: gray;'>Versión del Visualizador: 1.0</div>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<div style='text-align: center; font-size: smaller; color: gray;'>Versión del Visualizador: 1.8</div>", unsafe_allow_html=True)
 st.sidebar.markdown(f"<div style='text-align: center; font-size: x-small; color: lightgray;'>Desarrollado con Streamlit</div>", unsafe_allow_html=True)
